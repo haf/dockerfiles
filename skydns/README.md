@@ -9,3 +9,5 @@ Returns
 
     20 100 1113 1.eventstore.prod.deis.local.
     20 100 1113 2.eventstore.prod.deis.local.
+
+Also see https://github.com/skynetservices/skydns#service-discovery-via-the-dns
