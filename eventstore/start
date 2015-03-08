@@ -13,10 +13,11 @@ main() {
   # fi
 
   # below is intentionally both private, see ES docs on internal/external - has other meaning
-  ETH0_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
-  INTERNAL_IP=${INTERNAL_IP:-$ETH0_IP}
-  EXTERNAL_IP=${INTERNAL_IP:-$ETH0_IP}
-  GOSSIP_SEED="$ETH0_IP:$INTERNAL_HTTP_PORT"
+  IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+  # IP=$COREOS_PRIVATE_IPV4
+  INTERNAL_IP=${INTERNAL_IP:-$IP}
+  EXTERNAL_IP=${INTERNAL_IP:-$IP}
+  GOSSIP_SEED="$IP:$INTERNAL_HTTP_PORT"
 
   if [ $# -eq 0 ]; then
     # this is how to join the cluster; if you don't pass arguments to the image, then
