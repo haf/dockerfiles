@@ -11,5 +11,10 @@ COPY NLog.config /opt/eventstore/
 EXPOSE 1113
 EXPOSE 2113
 
+RUN groupadd -r eventstore && \
+    useradd -r -g eventstore eventstore && \
+    chown -R eventstore:eventstore /opt/eventstore
+
+USER eventstore
 WORKDIR /opt/eventstore
 ENTRYPOINT ["/opt/eventstore/clusternode"]
