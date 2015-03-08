@@ -1,0 +1,43 @@
+#!/bin/bash
+
+readonly IMAGE="haaf/eventstore"
+
+main() {
+  set -eo pipefail
+  # internal ip: communication between nodes
+  # external ip: communication client -> server -> client
+
+  # if [[ -z $GOSSIP_SEED && $# -eq 0 ]]; then
+  #   echo 'Missing env GOSSIP_SEED, and no arguments given'
+  #   exit 1
+  # fi
+
+  # below is intentionally both private, see ES docs on internal/external - has other meaning
+  ETH0_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+  INTERNAL_IP=${INTERNAL_IP:-$ETH0_IP}
+  EXTERNAL_IP=${INTERNAL_IP:-$ETH0_IP}
+  GOSSIP_SEED="$ETH0_IP:$INTERNAL_HTTP_PORT"
+
+  if [ $# -eq 0 ]; then
+    # this is how to join the cluster; if you don't pass arguments to the image, then
+    # this is what applies (and it will fail, because there's no way to know the IPs)
+    EXTRA=${EXTRA:-"--discover-via-dns=false --gossip-seed=$GOSSIP_SEED"}
+  else
+    EXTRA=$@
+  fi
+
+  echo "Container IPs:"
+  echo "$(ip addr)"
+
+  echo "Starting on internal ep: $INTERNAL_IP:{$INTERNAL_TCP_PORT,$INTERNAL_HTTP_PORT}, external ep: $EXTERNAL_IP:{$EXTERNAL_TCP_PORT,$EXTERNAL_HTTP_PORT}, with GOSSIP_SEED=$GOSSIP_SEED"
+  exec /opt/eventstore/clusternode \
+       --int-ip $INTERNAL_IP --ext-ip $EXTERNAL_IP \
+       --int-tcp-port=$INTERNAL_TCP_PORT --ext-tcp-port=$EXTERNAL_TCP_PORT \
+       --int-http-port=$INTERNAL_HTTP_PORT --ext-http-port=$EXTERNAL_HTTP_PORT \
+       --cluster-size=$CLUSTER_SIZE \
+       --db=$DATA_DIR \
+       --run-projections=all \
+       $EXTRA
+}
+
+main "$@"

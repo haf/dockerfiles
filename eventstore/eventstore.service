@@ -1,0 +1,12 @@
+[Unit]
+Description=EventStore - Distributed event sourcing
+Requires=docker.service
+After=docker.service
+
+[Service]
+EnvironmentFile=/etc/environment
+TimeoutStartSec=300
+ExecStartPre=/usr/bin/docker pull haaf/eventstore
+ExecStart=/bin/sh -c '/usr/bin/docker start -a haaf/eventstore || exec docker run --rm --name eventstore -p 1112 -p 1113 -p 2112 -p 2113 -v /var/lib/deis/store/eventstore:/var/lib/eventstore -e SERVICE_NAME=eventstore haaf/eventstore'
+ExecStop=-/usr/bin/docker rm -f eventstore
+Restart=always
