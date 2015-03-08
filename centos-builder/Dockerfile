@@ -37,3 +37,6 @@ RUN bash -l -c 'for v in $(cat /versions.txt); do rbenv global $v; gem install b
 
 USER builder
 WORKDIR /home/builder
+
+RUN echo 'export PATH=/root/.rbenv/bin:$PATH'
+RUN echo 'eval "$(rbenv init -)"' >> ~/.bashrc
