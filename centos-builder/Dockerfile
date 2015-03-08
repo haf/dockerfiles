@@ -15,20 +15,25 @@ RUN groupadd -r builder && \
     mkdir -p /home/builder && \
     chown -R builder:builder /home/builder
 
+RUN git clone https://github.com/sstephenson/rbenv.git /root/.rbenv
+RUN git clone https://github.com/sstephenson/ruby-build.git /root/.rbenv/plugins/ruby-build
+RUN git clone https://github.com/aripollak/rbenv-bundler-ruby-version.git /root/.rbenv/plugins/rbenv-bundler-ruby-version
+RUN /root/.rbenv/plugins/ruby-build/install.sh
+RUN chmod 755 $(find /root -type d)
+RUN chgrp -R builder $(find /root -type d)
+ENV PATH /root/.rbenv/bin:$PATH
+RUN echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh
+RUN echo 'eval "$(rbenv init -)"' >> .bashrc
+
+ENV CONFIGURE_OPTS --disable-install-doc
+
+# Install multiple versions of ruby
+COPY ./versions.txt /versions.txt
+RUN xargs -L 1 rbenv install < /versions.txt
+
+# Install Bundler for each version of ruby
+RUN echo 'gem: --no-rdoc --no-ri' >> /.gemrc
+RUN bash -l -c 'for v in $(cat /versions.txt); do rbenv global $v; gem install bundler fpm; done'
+
 USER builder
-
 WORKDIR /home/builder
-
-RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
-RUN echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile && \
-    echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
-RUN source ~/.bash_profile
-RUN mkdir -p ~/.rbenv/plugins && \
-    git clone https://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
-RUN bash -lc 'CONFIGURE_OPTS="--disable-install-doc" ~/.rbenv/plugins/ruby-build/bin/ruby-build 2.2.1 ~/.rbenv/versions/2.2.1'
-RUN echo 'gem: --no-rdoc --no-ri' >> ~/.gemrc
-RUN bash -lc 'rbenv global 2.2.1; gem install bundler; rbenv rehash'
-RUN git clone https://github.com/aripollak/rbenv-bundler-ruby-version.git ~/.rbenv/plugins/rbenv-bundler-ruby-version
-RUN gem install bundler fpm
-
-ENTRYPOINT ["/usr/bin/env", "fpm"]
