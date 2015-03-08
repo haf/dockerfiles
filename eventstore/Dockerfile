@@ -10,10 +10,9 @@ RUN yum update -y && yum install -y eventstore
 #
 # ADD https://tc-oss.intelliplan.net/guestAuth/repository/download/RpmBrewing_EventStore_Build/3224:id/eventstore-3.0.1-2.noarch.rpm /root/
 #
-# COPY ./eventstore-3.0.1-2.noarch.rpm /root/
-# RUN rpm -i /root/eventstore-3.0.1-2.noarch.rpm
-
-RUN rm /root/*.rpm
+#COPY ./eventstore-3.0.1-2.noarch.rpm /root/
+#RUN rpm -i /root/eventstore-3.0.1-2.noarch.rpm
+#RUN rm /root/*.rpm
 
 RUN groupadd -r eventstore && \
     useradd -r -g eventstore eventstore && \
