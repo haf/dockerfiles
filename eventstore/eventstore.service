@@ -5,8 +5,18 @@ After=docker.service
 
 [Service]
 EnvironmentFile=/etc/environment
-TimeoutStartSec=300
-ExecStartPre=/usr/bin/docker pull haaf/eventstore
-ExecStart=/bin/sh -c '/usr/bin/docker start -a haaf/eventstore || exec docker run --rm --name eventstore -p 1112 -p 1113 -p 2112 -p 2113 -v /var/lib/deis/store/eventstore:/var/lib/eventstore -e SERVICE_NAME=eventstore haaf/eventstore'
-ExecStop=-/usr/bin/docker rm -f eventstore
+TimeoutStartSec=10
+ExecStartPre=/bin/sh -c "docker history haaf/eventstore >/dev/null || docker pull haaf/eventstore"
+
+# data (ensure, never remove)
+ExecStartPre=/bin/sh -c "docker inspect eventstore-data >/dev/null || docker run --detach --name eventstore-data -v /var/lib/eventstore --entrypoint "/bin/bash" haaf/eventstore -c true"
+
+# es (ensure, remove existing)
+ExecStartPre=/bin/sh -c "docker inspect eventstore >/dev/null && docker rm -f eventstore || true"
+ExecStart=/bin/sh -c '/usr/bin/docker start -a eventstore || docker run --name eventstore --detach -p 1112 -p 1113 -p 2112 -p 2113 -e SERVICE_NAME=eventstore --volumes-from eventstore-data haaf/eventstore'
+ExecStopPost=-/usr/bin/docker rm -f eventstore
 Restart=always
+RestartSec=5
+
+[X-Fleet]
+Global=true
