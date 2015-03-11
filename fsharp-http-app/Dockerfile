@@ -21,8 +21,6 @@ COPY . /app
 
 RUN chown -R app:app /app
 
-USER app
-
 WORKDIR /app
 
 ENTRYPOINT fsharpi Program.fsx
