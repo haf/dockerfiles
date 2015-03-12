@@ -2,41 +2,45 @@ FROM centos:centos7
 
 MAINTAINER Henrik Feldt <henrik@haf.se>
 
+COPY install-haf-packagecloud.sh /install-haf-packagecloud.sh
+RUN /install-haf-packagecloud.sh && rm /install-haf-packagecloud.sh
+RUN yum update -y && yum install -y epel-release
+
 RUN \
   yum update -y && \
   yum install -y epel-release && \
   yum install -y python-setuptools hostname inotify-tools yum-utils ruby-devel \
                  gcc gcc-c++ rpm-build redhat-rpm-config make readline-devel \
-                 tar openssl-devel zlib-devel libffi-devel sqlite-devel git && \
+                 tar openssl-devel zlib-devel libffi-devel sqlite-devel git \
+                 subversion mono fsharp && \
   yum clean all
 
 RUN groupadd -r builder && \
     useradd -d /home/builder -r -g builder builder && \
     mkdir -p /home/builder && \
-    chown -R builder:builder /home/builder
-
-RUN git clone https://github.com/sstephenson/rbenv.git /root/.rbenv
-RUN git clone https://github.com/sstephenson/ruby-build.git /root/.rbenv/plugins/ruby-build
-RUN git clone https://github.com/aripollak/rbenv-bundler-ruby-version.git /root/.rbenv/plugins/rbenv-bundler-ruby-version
-RUN /root/.rbenv/plugins/ruby-build/install.sh
-RUN chmod 755 $(find /root -type d)
-RUN chgrp -R builder $(find /root -type d)
-ENV PATH /root/.rbenv/bin:$PATH
-RUN echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh
-RUN echo 'eval "$(rbenv init -)"' >> .bashrc
-
-ENV CONFIGURE_OPTS --disable-install-doc
-
-# Install multiple versions of ruby
-COPY ./versions.txt /versions.txt
-RUN xargs -L 1 rbenv install < /versions.txt
-
-# Install Bundler for each version of ruby
-RUN echo 'gem: --no-rdoc --no-ri' >> /.gemrc
-RUN bash -l -c 'for v in $(cat /versions.txt); do rbenv global $v; gem install bundler fpm; done'
+    chown -R builder:builder /home/builder && \
+    usermod -a -G wheel builder
 
 USER builder
-WORKDIR /home/builder
 
-RUN echo 'export PATH=/root/.rbenv/bin:$PATH'
-RUN echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+WORKDIR /home/builder
+RUN git clone https://github.com/sstephenson/rbenv.git /home/builder/.rbenv
+RUN git clone https://github.com/sstephenson/ruby-build.git /home/builder/.rbenv/plugins/ruby-build
+RUN git clone https://github.com/aripollak/rbenv-bundler-ruby-version.git /home/builder/.rbenv/plugins/rbenv-bundler-ruby-version
+
+RUN chmod 755 $(find /home/builder -type d) && \
+    chgrp -R builder $(find /home/builder -type d)
+
+ENV HOME=/home/builder \
+    PATH=/home/builder/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin \
+    CONFIGURE_OPTS=--disable-install-docs \
+    RUBY_VERSION=2.2.1
+
+RUN echo 'eval "$(rbenv init -)"' >> /home/builder/.bash_profile
+RUN rbenv install $RUBY_VERSION
+
+RUN echo 'rbenv global $RUBY_VERSION' >> /home/builder/.bash_profile
+RUN echo 'gem: --no-document' >>/home/builder/.gemrc
+RUN source /home/builder/.bash_profile && gem install bundler fpm albacore && rbenv rehash
+
+ENTRYPOINT ["/bin/bash", "--login"]
