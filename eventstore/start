@@ -17,7 +17,7 @@ main() {
   # IP=$COREOS_PRIVATE_IPV4
   INTERNAL_IP=${INTERNAL_IP:-$IP}
   EXTERNAL_IP=${INTERNAL_IP:-$IP}
-  GOSSIP_SEED="$IP:$INTERNAL_HTTP_PORT"
+  GOSSIP_SEED=${GOSSIP_SEED:-"$IP:$INTERNAL_HTTP_PORT"}
 
   if [ $# -eq 0 ]; then
     # this is how to join the cluster; if you don't pass arguments to the image, then
@@ -31,7 +31,9 @@ main() {
   echo "$(ip addr)"
 
   echo "Starting on internal ep: $INTERNAL_IP:{$INTERNAL_TCP_PORT,$INTERNAL_HTTP_PORT}, external ep: $EXTERNAL_IP:{$EXTERNAL_TCP_PORT,$EXTERNAL_HTTP_PORT}, with GOSSIP_SEED=$GOSSIP_SEED"
-  exec /opt/eventstore/clusternode \
+
+  MONO_THREADS_PER_CPU=${MONO_THREADS_PER_CPU:-20}
+  /opt/eventstore/clusternode \
        --int-ip $INTERNAL_IP --ext-ip $EXTERNAL_IP \
        --int-tcp-port=$INTERNAL_TCP_PORT --ext-tcp-port=$EXTERNAL_TCP_PORT \
        --int-http-port=$INTERNAL_HTTP_PORT --ext-http-port=$EXTERNAL_HTTP_PORT \
