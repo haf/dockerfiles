@@ -26,7 +26,7 @@ curl -XPUT http://127.0.0.1:4001/v2/keys/skydns/local/deis/prod/eventstore/1 -d 
 Alternative to launch a single node. `-it` means to run in interactive mode and capture STDIN.
 
 ```
-docker run -it -p 1112 -p 1113 -p 2112 -p 2113 -e CLUSTER_SIZE=1 --volumes-from eventstore-data -it haaf/eventstore
+docker run -it -p 1112:1112 -p 1113:1113 -p 2112:2112 -p 2113:2113 -e CLUSTER_SIZE=1 --volumes-from eventstore-data -it haaf/eventstore
 ```
 
 You should be able to resolve the service:
