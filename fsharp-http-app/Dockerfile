@@ -4,7 +4,10 @@ MAINTAINER Henrik Feldt <henrik@haf.se>
 COPY install-haf-packagecloud.sh /install-haf-packagecloud.sh
 RUN /install-haf-packagecloud.sh
 
-RUN yum update -y && yum install -y mono fsharp
+RUN yum update -y && yum install -y epel-release
+RUN yum install -y mono fsharp ruby make tar patch gcc gcc-c++ openssl-devel readline-devel libxml2 libxml2-devel libxslt libxslt-devel ruby-devel zlib-devel
+RUN gem install nokogiri albacore bundler
+
 RUN mozroots --import --sync --machine && \
     (yes | certmgr -ssl -m https://nuget.org) && \
     (yes | certmgr -ssl -m https://packages.nuget.org/v1/FeedService.svc/) && \
@@ -22,5 +25,3 @@ COPY . /app
 RUN chown -R app:app /app
 
 WORKDIR /app
-
-ENTRYPOINT fsharpi Program.fsx
