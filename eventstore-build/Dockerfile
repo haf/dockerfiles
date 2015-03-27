@@ -1,10 +1,10 @@
 FROM centos:latest
 MAINTAINER Henrik Feldt <henrik@haf.se>
 
-COPY install-haf-packagecloud.sh /config/install-haf-packagecloud.sh
-
-RUN /config/install-haf-packagecloud.sh && yum update -y && yum install -y epel-release
-RUN yum install -y make tar patch gcc gcc-c++ git vim subversion mono
+RUN yum update -y && yum install -y epel-release yum-utils && \
+    rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF" && \
+    yum-config-manager --add-repo http://download.mono-project.com/repo/centos/
+RUN yum install -y make tar patch gcc gcc-c++ git vim subversion mono-complete
 
 RUN git clone https://github.com/EventStore/EventStore.git /tmp/EventStore
 WORKDIR /tmp/EventStore
